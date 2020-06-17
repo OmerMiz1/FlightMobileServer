@@ -35,7 +35,6 @@ namespace FlightMobileServer.ClientModels {
         public string Ip { get; set; }//OLD
         public int Port { get; set; }//OLD
         private const int DefaultTimeout = 10000;
-        public bool Connected => _client.Connected;
 
         /* CTor\DTor */
         public FlightGearAsyncClient()
@@ -56,7 +55,7 @@ namespace FlightMobileServer.ClientModels {
         }
         public void Write(Command cmd) {
             using var stream = _client.GetStream();
-            if (stream == null) throw new Exception(NetworkStreamError); ;
+            if (stream == null) throw new Exception(NetworkStreamError);
             stream.WriteTimeout = DefaultTimeout;
 
             var writeBuffer = string.Format(SetCommandTemplate, AileronPath, cmd.Aileron) // Set requests

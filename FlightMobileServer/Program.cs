@@ -16,11 +16,16 @@ namespace FlightMobileServer
             CreateHostBuilder(args).Build().Run();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
+        public static IHostBuilder CreateHostBuilder(string[] args) {
+            var config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", false)
+                .Build();
+            
+            return Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder => {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.UseUrls("0.0.0.0:5400");
                 });
+        }
     }
 }
