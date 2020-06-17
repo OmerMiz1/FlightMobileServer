@@ -13,12 +13,12 @@ namespace FlightMobileServer.Controllers
     [ApiController]
     public class FlightGearController : ControllerBase
     {
-        private IAsyncTcpClient _client;
-        private IConfiguration _config;
+        private readonly IAsyncTcpClient _client;
+        private readonly string _screenshotUrl;
 
-        public FlightGearController(IAsyncTcpClient client, IConfiguration config) {
+        public FlightGearController(IAsyncTcpClient client, SimulatorConfig config) {
             _client = client;
-            _config = config;
+            _screenshotUrl = $"http://{config.Ip}:{config.HttpPort}/screenshot";
         }
 
         [Route("api/command")]
@@ -29,7 +29,8 @@ namespace FlightMobileServer.Controllers
                 result = await _client.Execute(cmd);
             }
             catch (Exception e) {
-                throw new NotImplementedException(); // todo handle exception
+                // throw e;
+                return BadRequest();
             }
 
             if (result == Result.Ok) return Ok();
@@ -39,8 +40,14 @@ namespace FlightMobileServer.Controllers
         [Route("screenshot")]
         [HttpGet]
         public async Task<IActionResult> GetScreenshot() {
-            return Redirect(
-                $"http://{_config["SimulatorHttpIp"]}:{_config["SimulatorHttpPort"]}/screenshot");
+            return Redirect(_screenshotUrl);
+        }
+
+        //debug remove
+        [Route("test")]
+        [HttpGet]
+        public async Task<IActionResult> Test() { 
+            return Ok("Hello");
         }
     }
 }

@@ -32,29 +32,35 @@ namespace FlightMobileServer.ClientModels {
         /* Simulator communication */
         private readonly BlockingCollection<AsyncCommand> _queue;
         private readonly TcpClient _client;
-        public string Ip { get; set; }//OLD
-        public int Port { get; set; }//OLD
+        private readonly SimulatorConfig _simulatorConfig;
         private const int DefaultTimeout = 10000;
+        private bool _running;
+
+
 
         /* CTor\DTor */
-        public FlightGearAsyncClient()
+        public FlightGearAsyncClient(SimulatorConfig simulatorConfig)
         {
+            _simulatorConfig = simulatorConfig;
             _queue = new BlockingCollection<AsyncCommand>();
             _client = new TcpClient();
+            Start();
         }
         ~FlightGearAsyncClient() {
-            if(Connected) Disconnect();
+            if(_client.Connected) Disconnect();
         }
 
         /* ITcpClient Methods */
         public void Start() {
+            _running = true;
             Task.Factory.StartNew(ProcessCommands);
         }
         public void Stop() {
+            _running = false;
             Disconnect();
         }
         public void Write(Command cmd) {
-            using var stream = _client.GetStream();
+            var stream = _client.GetStream();
             if (stream == null) throw new Exception(NetworkStreamError);
             stream.WriteTimeout = DefaultTimeout;
 
@@ -71,7 +77,7 @@ namespace FlightMobileServer.ClientModels {
         }
         public string Read() {
             const int readBufferSize = 4 * 1024;
-            using var stream = _client.GetStream();
+            var stream = _client.GetStream();
             if (stream == null) throw new Exception(NetworkStreamError); ;
             stream.ReadTimeout = DefaultTimeout;
 
@@ -82,8 +88,8 @@ namespace FlightMobileServer.ClientModels {
 
         /* IAsyncTcpClient Methods */
         public void ProcessCommands() {
-            
-            Connect(Ip,Port);
+
+            Connect(_simulatorConfig.Ip,int.Parse(_simulatorConfig.TelnetPort)); // debug not handling parse exceptions
             foreach (var cmd in _queue.GetConsumingEnumerable()) {
                 var readBuffer = string.Empty;
                 try {
@@ -96,7 +102,7 @@ namespace FlightMobileServer.ClientModels {
                 }
                 catch (Exception e) {
                     cmd.Completion.SetException(e);
-                    cmd.Completion.SetResult(Result.NotOk);
+                    continue;
                 }
 
                 var res = ValidateResults(cmd.Command, readBuffer);
@@ -112,19 +118,30 @@ namespace FlightMobileServer.ClientModels {
             const string decimalRx = @"\d+(\.\d+)?";
             var matches = Regex.Matches(readBuffer, decimalRx);
             var matchEnum = matches.GetEnumerator();
-            if (!matchEnum.MoveNext() || !matchEnum.Current.Equals(cmd.Aileron)) return Result.NotOk;
-            if (!matchEnum.MoveNext() || !matchEnum.Current.Equals(cmd.Rudder)) return Result.NotOk;
-            if (!matchEnum.MoveNext() || !matchEnum.Current.Equals(cmd.Elevator)) return Result.NotOk;
-            if (!matchEnum.MoveNext() || !matchEnum.Current.Equals(cmd.Throttle)) return Result.NotOk;
+            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Aileron.ToString())) return Result.NotOk;
+            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Rudder)) return Result.NotOk;
+            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Elevator)) return Result.NotOk;
+            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Throttle)) return Result.NotOk;
             return Result.Ok;
         }
 
-        private void Connect(string ip, int port)
-        {
-            _client.Connect(ip, port);
+        private void Connect(string ip, int port) {
+            var attempt = 0;
+            IAsyncResult result = null;
+
+            while (_running && !_client.Connected) {
+                Debug.WriteLine($"TCP Client: Connect attempt #{attempt++}...");
+                result = _client.BeginConnect(ip, port, null, null);
+                result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(5));
+            }
+
+            if (result == null)
+                throw new Exception("Error connecting to telnet server");
+
+            _client.EndConnect(result);
             Debug.WriteLine("TCP Client: Connected successfully to server...");
 
-            using var stream = _client.GetStream();
+            var stream = _client.GetStream();
             if (stream == null) throw new Exception(NetworkStreamError);
 
             var initBuf = Encoding.ASCII.GetBytes("data\n");

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Newtonsoft;
 
 namespace FlightMobileServer
 {
@@ -21,7 +22,11 @@ namespace FlightMobileServer
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services) {
-            services.AddRouting();
+            var simulatorConfigSection = Configuration.GetSection("SimulatorConfig");
+            var simulatorConfig = new SimulatorConfig(simulatorConfigSection);
+
+            services.AddControllers().AddNewtonsoftJson();
+            services.AddSingleton(simulatorConfig);
             services.AddSingleton(typeof(IAsyncTcpClient), typeof(FlightGearAsyncClient));
         }
 
