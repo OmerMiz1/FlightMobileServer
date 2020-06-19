@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using FlightMobileServer.Models;
+//a/dsf
 
 namespace FlightMobileServer.ClientModels {
     public enum Result { Ok, NotOk }
