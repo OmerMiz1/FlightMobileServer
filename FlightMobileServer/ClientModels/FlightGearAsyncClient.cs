@@ -19,11 +19,12 @@ namespace FlightMobileServer.ClientModels {
         private const string ElevatorPath = @"/controls/flight/elevator";
         private const string RudderPath = @"/controls/flight/rudder";
         private const string AileronPath = @"/controls/flight/aileron";
-        private const string ThrottlePath = @"/controls/engines/engine/throttle";
+        private const string ThrottlePath = @"/controls/engines/current-engine/throttle";
+        //private const string ThrottlePath = @"/controls/engines/engine/throttle"; // used this one before debugging with the simulator
 
         /* Command Templates */
-        private const string SetCommandTemplate = "set {0} {1} \r\n";
-        private const string GetCommandTemplate = "get {0} \r\n";
+        private const string SetCommandTemplate = "set {0} {1}\r\n";
+        private const string GetCommandTemplate = "get {0}\r\n";
         
         /* Error Templates */
         private const string ConnectionError = "Client is not connected";
@@ -64,11 +65,14 @@ namespace FlightMobileServer.ClientModels {
             if (stream == null) throw new Exception(NetworkStreamError);
             stream.WriteTimeout = DefaultTimeout;
 
-            var writeBuffer = string.Format(SetCommandTemplate, AileronPath, cmd.Aileron) // Set requests
+            var writeBuffer =
+                                // Set requests
+                                string.Format(SetCommandTemplate, AileronPath, cmd.Aileron) 
                               + string.Format(SetCommandTemplate, RudderPath, cmd.Rudder)
                               + string.Format(SetCommandTemplate, ElevatorPath, cmd.Elevator)
                               + string.Format(SetCommandTemplate, ThrottlePath, cmd.Throttle)
-                              + string.Format(GetCommandTemplate, AileronPath) // Get requests
+                                // Get requests
+                              + string.Format(GetCommandTemplate, AileronPath) 
                               + string.Format(GetCommandTemplate, RudderPath)
                               + string.Format(GetCommandTemplate, ElevatorPath)
                               + string.Format(GetCommandTemplate, ThrottlePath);
@@ -98,7 +102,6 @@ namespace FlightMobileServer.ClientModels {
                 }
                 catch (IOException ioe) {
                     cmd.Completion.SetException(ioe);
-                    cmd.Completion.SetResult(Result.NotOk);
                 }
                 catch (Exception e) {
                     cmd.Completion.SetException(e);
