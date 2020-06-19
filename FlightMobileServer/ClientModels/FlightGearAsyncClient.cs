@@ -122,9 +122,9 @@ namespace FlightMobileServer.ClientModels {
             var matches = Regex.Matches(readBuffer, decimalRx);
             var matchEnum = matches.GetEnumerator();
             if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Aileron.ToString())) return Result.NotOk;
-            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Rudder)) return Result.NotOk;
-            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Elevator)) return Result.NotOk;
-            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Throttle)) return Result.NotOk;
+            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Rudder.ToString())) return Result.NotOk;
+            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Elevator.ToString())) return Result.NotOk;
+            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Throttle.ToString())) return Result.NotOk;
             return Result.Ok;
         }
 
