@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using FlightMobileServer.ClientModels;
 using FlightMobileServer.Models;
@@ -18,7 +19,8 @@ namespace FlightMobileServer.Controllers
 
         public FlightGearController(IAsyncTcpClient client, SimulatorConfig config) {
             _client = client;
-            _screenshotUrl = $"http://{config.Ip}:{config.HttpPort}/screenshot";
+            // _screenshotUrl = $"http://{config.Ip}:{config.HttpPort}/screenshot";
+            _screenshotUrl = $"http://10.0.2.2:{config.HttpPort}/screenshot";
         }
 
         [Route("api/command")]
@@ -40,7 +42,13 @@ namespace FlightMobileServer.Controllers
         [Route("screenshot")]
         [HttpGet]
         public async Task<IActionResult> GetScreenshot() {
-            return Redirect(_screenshotUrl);
+            var httpClient = new HttpClient {
+                Timeout = TimeSpan.FromSeconds(30)
+            };
+            var responseMessage = await httpClient.GetAsync(_screenshotUrl);
+            var resultImage = await responseMessage.Content.ReadAsByteArrayAsync();
+            return File(resultImage, "image/jpg");
+            // return Redirect(_screenshotUrl);
         }
 
         //debug remove

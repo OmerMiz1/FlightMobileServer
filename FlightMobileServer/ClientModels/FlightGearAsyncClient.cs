@@ -37,8 +37,6 @@ namespace FlightMobileServer.ClientModels {
         private const int DefaultTimeout = 10000;
         private bool _running;
 
-
-
         /* CTor\DTor */
         public FlightGearAsyncClient(SimulatorConfig simulatorConfig)
         {
