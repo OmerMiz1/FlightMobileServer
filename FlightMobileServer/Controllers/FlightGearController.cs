@@ -19,8 +19,7 @@ namespace FlightMobileServer.Controllers
 
         public FlightGearController(IAsyncTcpClient client, SimulatorConfig config) {
             _client = client;
-            // _screenshotUrl = $"http://{config.Ip}:{config.HttpPort}/screenshot";
-            _screenshotUrl = $"http://10.0.2.2:{config.HttpPort}/screenshot";
+            _screenshotUrl = $"http://{config.Ip}:{config.HttpPort}/screenshot";
         }
 
         [Route("api/command")]
@@ -30,8 +29,7 @@ namespace FlightMobileServer.Controllers
             try {
                 result = await _client.Execute(cmd);
             }
-            catch (Exception e) {
-                // throw e;
+            catch (Exception) {
                 return BadRequest();
             }
 
@@ -48,7 +46,6 @@ namespace FlightMobileServer.Controllers
             var responseMessage = await httpClient.GetAsync(_screenshotUrl);
             var resultImage = await responseMessage.Content.ReadAsByteArrayAsync();
             return File(resultImage, "image/jpg");
-            // return Redirect(_screenshotUrl);
         }
 
         //debug remove
