@@ -130,22 +130,14 @@ namespace FlightMobileServer.ClientModels {
             
             foreach (var match in matches) {
                 var receivedVal = double.Parse(match.ToString());
-                double sentVal = 0;
 
-                switch (curVar) {
-                    case VariableName.Aileron:
-                        sentVal = cmd.Aileron;
-                        break;
-                    case VariableName.Rudder:
-                        sentVal = cmd.Rudder;
-                        break;
-                    case VariableName.Elevator:
-                        sentVal = cmd.Elevator;
-                        break;
-                    case VariableName.Throttle:
-                        sentVal = cmd.Throttle;
-                        break;
-                }
+                var sentVal = curVar switch {
+                    VariableName.Aileron => cmd.Aileron,
+                    VariableName.Rudder => cmd.Rudder,
+                    VariableName.Elevator => cmd.Elevator,
+                    VariableName.Throttle => cmd.Throttle,
+                    _ => 0
+                };
 
                 if (!sentVal.Equals(receivedVal)) return Result.NotOk;
                 ++curVar;
