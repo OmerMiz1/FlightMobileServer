@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FlightMobileServer.ClientModels;
+using FlightMobileServer.Controllers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -26,6 +27,7 @@ namespace FlightMobileServer
             var simulatorConfig = new SimulatorConfig(simulatorConfigSection);
 
             services.AddControllers().AddNewtonsoftJson();
+            services.AddScoped(typeof(FlightGearController));
             services.AddSingleton(simulatorConfig);
             services.AddSingleton(typeof(IAsyncTcpClient), typeof(FlightGearAsyncClient));
         }

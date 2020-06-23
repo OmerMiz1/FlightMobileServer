@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -33,7 +34,12 @@ namespace FlightMobileServer.Controllers
                 return BadRequest();
             }
 
-            if (result == Result.Ok) return Ok();
+            if (result == Result.Ok) {
+                Debug.WriteLine("Ok");
+                return Ok();
+            }
+
+            Debug.WriteLine("BadRequest");
             return BadRequest();
         }
 

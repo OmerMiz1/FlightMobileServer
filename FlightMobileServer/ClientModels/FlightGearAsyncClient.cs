@@ -100,6 +100,7 @@ namespace FlightMobileServer.ClientModels {
                 }
                 catch (IOException ioe) {
                     cmd.Completion.SetException(ioe);
+                    continue;
                 }
                 catch (Exception e) {
                     cmd.Completion.SetException(e);
