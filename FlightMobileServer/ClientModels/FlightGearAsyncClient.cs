@@ -37,6 +37,13 @@ namespace FlightMobileServer.ClientModels {
         private const int DefaultTimeout = 10000;
         private bool _running;
 
+        private enum VariableName {
+            Aileron=0,
+            Rudder,
+            Elevator,
+            Throttle
+        };
+
         /* CTor\DTor */
         public FlightGearAsyncClient(SimulatorConfig simulatorConfig)
         {
@@ -117,13 +124,32 @@ namespace FlightMobileServer.ClientModels {
             return asyncCommand.Task;
         }
         private static Result ValidateResults(Command cmd, string readBuffer) {
-            const string decimalRx = @"\d+(\.\d+)?";
+            const string decimalRx = @"-?\d+(\.\d+)?";
             var matches = Regex.Matches(readBuffer, decimalRx);
-            var matchEnum = matches.GetEnumerator();
-            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Aileron.ToString())) return Result.NotOk;
-            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Rudder.ToString())) return Result.NotOk;
-            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Elevator.ToString())) return Result.NotOk;
-            if (!matchEnum.MoveNext() || !matchEnum.Current.ToString().Equals(cmd.Throttle.ToString())) return Result.NotOk;
+            var curVar = VariableName.Aileron;
+            
+            foreach (var match in matches) {
+                var receivedVal = double.Parse(match.ToString());
+                double sentVal = 0;
+
+                switch (curVar) {
+                    case VariableName.Aileron:
+                        sentVal = cmd.Aileron;
+                        break;
+                    case VariableName.Rudder:
+                        sentVal = cmd.Rudder;
+                        break;
+                    case VariableName.Elevator:
+                        sentVal = cmd.Elevator;
+                        break;
+                    case VariableName.Throttle:
+                        sentVal = cmd.Throttle;
+                        break;
+                }
+
+                if (!sentVal.Equals(receivedVal)) return Result.NotOk;
+                ++curVar;
+            }
             return Result.Ok;
         }
 

@@ -39,7 +39,7 @@ namespace FlightMobileServer.Controllers
                 return Ok();
             }
 
-            Debug.WriteLine("BadRequest");
+            Debug.WriteLine($"BadRequest: Aileron={cmd.Aileron}, Rudder={cmd.Rudder}, Elevator={cmd.Elevator}, Throtthle={cmd.Throttle}");
             return BadRequest();
         }
 
