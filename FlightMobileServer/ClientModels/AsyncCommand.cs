@@ -1,7 +1,7 @@
-﻿using FlightMobileServer.Models;
+﻿using FlightMobileWeb.Models;
 using System.Threading.Tasks;
 
-namespace FlightMobileServer.ClientModels
+namespace FlightMobileWeb.ClientModels
 {
     public enum Result { Ok, NotOk }
     public class AsyncCommand

@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
-namespace FlightMobileServer
+namespace FlightMobileWeb
 {
     public class Program
     {
@@ -13,10 +12,6 @@ namespace FlightMobileServer
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
-            var config = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", false)
-                .Build();
-
             return Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

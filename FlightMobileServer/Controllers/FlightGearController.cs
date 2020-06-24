@@ -1,11 +1,11 @@
-﻿using FlightMobileServer.ClientModels;
-using FlightMobileServer.Models;
+﻿using FlightMobileWeb.ClientModels;
+using FlightMobileWeb.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace FlightMobileServer.Controllers
+namespace FlightMobileWeb.Controllers
 {
     [ApiController]
     public class FlightGearController : ControllerBase

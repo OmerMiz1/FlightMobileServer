@@ -1,4 +1,4 @@
-﻿using FlightMobileServer.Models;
+﻿using FlightMobileWeb.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace FlightMobileServer.ClientModels
+namespace FlightMobileWeb.ClientModels
 {
     public class FlightGearAsyncClient : IAsyncTcpClient
     {
@@ -23,7 +23,6 @@ namespace FlightMobileServer.ClientModels
         private const string GetCommandTemplate = "get {0}\r\n";
 
         /* Error Templates */
-        private const string ConnectionError = "Client is not connected";
         private const string NetworkStreamError = "Error: Cant get NetworkStream from TcpClient";
 
         /* Simulator Communication & Tasks Queue*/

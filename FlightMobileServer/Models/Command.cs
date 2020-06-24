@@ -1,8 +1,7 @@
-﻿
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
-namespace FlightMobileServer.Models
+namespace FlightMobileWeb.Models
 {
     public class Command
     {

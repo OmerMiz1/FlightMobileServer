@@ -1,6 +1,6 @@
-﻿using FlightMobileServer.Models;
+﻿using FlightMobileWeb.Models;
 
-namespace FlightMobileServer.ClientModels
+namespace FlightMobileWeb.ClientModels
 {
     public interface ITcpClient
     {

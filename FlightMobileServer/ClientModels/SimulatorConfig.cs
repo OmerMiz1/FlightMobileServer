@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace FlightMobileServer.ClientModels
+namespace FlightMobileWeb.ClientModels
 {
 
     /* Data Object */

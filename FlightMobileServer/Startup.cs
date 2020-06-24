@@ -1,12 +1,12 @@
-using FlightMobileServer.ClientModels;
-using FlightMobileServer.Controllers;
+using FlightMobileWeb.ClientModels;
+using FlightMobileWeb.Controllers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace FlightMobileServer
+namespace FlightMobileWeb
 {
     public class Startup
     {
