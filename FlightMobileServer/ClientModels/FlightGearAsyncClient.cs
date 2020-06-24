@@ -1,20 +1,17 @@
-﻿using System;
-using System.Collections;
+﻿using FlightMobileServer.Models;
+using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using FlightMobileServer.Models;
 
-namespace FlightMobileServer.ClientModels {
-    public class FlightGearAsyncClient : IAsyncTcpClient{
+namespace FlightMobileServer.ClientModels
+{
+    public class FlightGearAsyncClient : IAsyncTcpClient
+    {
         /* Variables Paths */
         private const string ElevatorPath = @"/controls/flight/elevator";
         private const string RudderPath = @"/controls/flight/rudder";
@@ -24,7 +21,7 @@ namespace FlightMobileServer.ClientModels {
         /* Command Templates (simulator queries templates) */
         private const string SetCommandTemplate = "set {0} {1}\r\n";
         private const string GetCommandTemplate = "get {0}\r\n";
-        
+
         /* Error Templates */
         private const string ConnectionError = "Client is not connected";
         private const string NetworkStreamError = "Error: Cant get NetworkStream from TcpClient";
@@ -34,12 +31,13 @@ namespace FlightMobileServer.ClientModels {
         private readonly SimulatorConfig _simulatorConfig;
         private readonly TcpClient _client;
         private const int DefaultTimeout = 10000;
-        private const int ReadBufferSize = 4*1024;
+        private const int ReadBufferSize = 4 * 1024;
         private bool _running;
 
         /* Enum used for validation method */
-        private enum VariableName {
-            Aileron=0,
+        private enum VariableName
+        {
+            Aileron = 0,
             Rudder,
             Elevator,
             Throttle
@@ -53,20 +51,24 @@ namespace FlightMobileServer.ClientModels {
             _client = new TcpClient();
             Start();
         }
-        ~FlightGearAsyncClient() {
-            if(_client.Connected) Disconnect();
+        ~FlightGearAsyncClient()
+        {
+            if (_client.Connected) Disconnect();
         }
 
         /* ITcpClient Methods */
-        public void Start() {
+        public void Start()
+        {
             _running = true;
             Task.Factory.StartNew(ProcessCommands);
         }
-        public void Stop() {
+        public void Stop()
+        {
             _running = false;
             Disconnect();
         }
-        public void Write(Command cmd) {
+        public void Write(Command cmd)
+        {
             var stream = _client.GetStream();
             if (stream == null) throw new Exception(NetworkStreamError);
             stream.WriteTimeout = DefaultTimeout;
@@ -74,12 +76,12 @@ namespace FlightMobileServer.ClientModels {
             /* Prepare request string */
             var writeBuffer =
                                 /* Set Requests */
-                                string.Format(SetCommandTemplate, AileronPath, cmd.Aileron) 
+                                string.Format(SetCommandTemplate, AileronPath, cmd.Aileron)
                               + string.Format(SetCommandTemplate, RudderPath, cmd.Rudder)
                               + string.Format(SetCommandTemplate, ElevatorPath, cmd.Elevator)
                               + string.Format(SetCommandTemplate, ThrottlePath, cmd.Throttle)
-                                /* Get Requests */
-                              + string.Format(GetCommandTemplate, AileronPath) 
+                              /* Get Requests */
+                              + string.Format(GetCommandTemplate, AileronPath)
                               + string.Format(GetCommandTemplate, RudderPath)
                               + string.Format(GetCommandTemplate, ElevatorPath)
                               + string.Format(GetCommandTemplate, ThrottlePath);
@@ -88,7 +90,8 @@ namespace FlightMobileServer.ClientModels {
             var writeBufferBytes = Encoding.ASCII.GetBytes(writeBuffer);
             stream.Write(writeBufferBytes, 0, writeBufferBytes.Length);
         }
-        public string Read() {
+        public string Read()
+        {
             /* Set stream and buffer */
             var stream = _client.GetStream();
             if (stream == null) throw new Exception(NetworkStreamError);
@@ -101,7 +104,8 @@ namespace FlightMobileServer.ClientModels {
         }
 
         /* IAsyncTcpClient Methods */
-        public void ProcessCommands() {
+        public void ProcessCommands()
+        {
             /* Parse port from config throw exception if fail */
             if (!int.TryParse(_simulatorConfig.TelnetPort, out var port))
                 throw new Exception("Error parsing port");
@@ -109,17 +113,21 @@ namespace FlightMobileServer.ClientModels {
             Connect(_simulatorConfig.Ip, port);
 
             /* Loop works as long as there are commands to process - o.w. blocks until receives */
-            foreach (var cmd in _queue.GetConsumingEnumerable()) {
+            foreach (var cmd in _queue.GetConsumingEnumerable())
+            {
                 string readBuffer;
-                try {
+                try
+                {
                     Write(cmd.Command);
                     readBuffer = Read();
                 }
-                catch (IOException ioe) {
+                catch (IOException ioe)
+                {
                     cmd.Completion.SetException(ioe);
                     continue;
                 }
-                catch (Exception e) {
+                catch (Exception e)
+                {
                     cmd.Completion.SetException(e);
                     continue;
                 }
@@ -128,24 +136,28 @@ namespace FlightMobileServer.ClientModels {
                 cmd.Completion.SetResult(res);
             }
         }
-        public Task<Result> Execute(Command cmd) {
+        public Task<Result> Execute(Command cmd)
+        {
             var asyncCommand = new AsyncCommand(cmd);
             _queue.Add(asyncCommand);
             return asyncCommand.Task;
         }
-        private static Result ValidateResults(Command cmd, string readBuffer) {
+        private static Result ValidateResults(Command cmd, string readBuffer)
+        {
             /* Find all decimal (double) matches in returned response string */
             const string decimalRx = @"-?\d+(\.\d+)?";
             var matches = Regex.Matches(readBuffer, decimalRx);
 
             /* Iterates each match and compares to the actual value that was sent
              and check if anything went wrong */
-            var curVar = VariableName.Aileron; 
-            foreach (var match in matches) {
+            var curVar = VariableName.Aileron;
+            foreach (var match in matches)
+            {
                 var receivedVal = double.Parse(match.ToString());
 
 
-                var sentVal = curVar switch {
+                var sentVal = curVar switch
+                {
                     VariableName.Aileron => cmd.Aileron,
                     VariableName.Rudder => cmd.Rudder,
                     VariableName.Elevator => cmd.Elevator,
@@ -160,14 +172,16 @@ namespace FlightMobileServer.ClientModels {
             return Result.Ok;
         }
 
-        private void Connect(string ip, int port) {
+        private void Connect(string ip, int port)
+        {
             var attempt = 0; // Debug remove
             IAsyncResult result = null;
 
             /* Keeps trying to connect to a tcp client until succeeds */
             /**NOTE: once it is connected if connection was lost or simulator 
                was restarted you have to restart this mediator as well! */
-            while (_running && !_client.Connected) {
+            while (_running && !_client.Connected)
+            {
                 Debug.WriteLine($"TCP Client: Connect attempt #{attempt++}..."); // Debug remove
                 result = _client.BeginConnect(ip, port, null, null);
                 result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(5));

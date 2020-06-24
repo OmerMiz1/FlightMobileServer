@@ -1,9 +1,11 @@
 ﻿
-using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 
-namespace FlightMobileServer.Models {
-    public class Command {
+namespace FlightMobileServer.Models
+{
+    public class Command
+    {
 
         [JsonProperty("aileron")]
         [Range(-1, 1, ErrorMessage = AileronOutOfRangeMsg)]
@@ -15,7 +17,7 @@ namespace FlightMobileServer.Models {
 
         [JsonProperty("elevator")]
         [Range(-1, 1, ErrorMessage = ElevatorOutOfRangeMsg)]
-        public double Elevator{ get; set; }
+        public double Elevator { get; set; }
 
         [JsonProperty("throttle")]
         [Range(0, 1, ErrorMessage = ThrottleOutOfRangeMsg)]

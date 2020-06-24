@@ -1,10 +1,13 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace FlightMobileServer.ClientModels {
+namespace FlightMobileServer.ClientModels
+{
 
     /* Data Object */
-    public class SimulatorConfig {
-        public SimulatorConfig(IConfiguration config) {
+    public class SimulatorConfig
+    {
+        public SimulatorConfig(IConfiguration config)
+        {
             Ip = config["Ip"];
             TelnetPort = config["TelnetPort"];
             HttpPort = config["HttpPort"];

@@ -1,10 +1,13 @@
-﻿using System.Threading.Tasks;
-using FlightMobileServer.Models;
+﻿using FlightMobileServer.Models;
+using System.Threading.Tasks;
 
-namespace FlightMobileServer.ClientModels {
+namespace FlightMobileServer.ClientModels
+{
     public enum Result { Ok, NotOk }
-    public class AsyncCommand {
-        public AsyncCommand(Command command, TaskCompletionSource<Result> completion) {
+    public class AsyncCommand
+    {
+        public AsyncCommand(Command command, TaskCompletionSource<Result> completion)
+        {
             Command = command;
             Completion = completion;
         }
@@ -13,9 +16,10 @@ namespace FlightMobileServer.ClientModels {
         public Task<Result> Task => Completion.Task;
         public TaskCompletionSource<Result> Completion { get; private set; }
 
-        public AsyncCommand (Command input) { 
+        public AsyncCommand(Command input)
+        {
             Command = input;
-            Completion = new TaskCompletionSource<Result> (
+            Completion = new TaskCompletionSource<Result>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
         }
     }
