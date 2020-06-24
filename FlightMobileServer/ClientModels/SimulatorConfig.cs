@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 
 namespace FlightMobileServer.ClientModels {
+
+    /* Data Object */
     public class SimulatorConfig {
         public SimulatorConfig(IConfiguration config) {
             Ip = config["Ip"];

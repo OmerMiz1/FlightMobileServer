@@ -15,14 +15,13 @@ using FlightMobileServer.Models;
 
 namespace FlightMobileServer.ClientModels {
     public class FlightGearAsyncClient : IAsyncTcpClient{
-        /* Variables */
+        /* Variables Paths */
         private const string ElevatorPath = @"/controls/flight/elevator";
         private const string RudderPath = @"/controls/flight/rudder";
         private const string AileronPath = @"/controls/flight/aileron";
         private const string ThrottlePath = @"/controls/engines/current-engine/throttle";
-        //private const string ThrottlePath = @"/controls/engines/engine/throttle"; // used this one before debugging with the simulator
 
-        /* Command Templates */
+        /* Command Templates (simulator queries templates) */
         private const string SetCommandTemplate = "set {0} {1}\r\n";
         private const string GetCommandTemplate = "get {0}\r\n";
         
@@ -30,13 +29,15 @@ namespace FlightMobileServer.ClientModels {
         private const string ConnectionError = "Client is not connected";
         private const string NetworkStreamError = "Error: Cant get NetworkStream from TcpClient";
 
-        /* Simulator communication */
+        /* Simulator Communication & Tasks Queue*/
         private readonly BlockingCollection<AsyncCommand> _queue;
-        private readonly TcpClient _client;
         private readonly SimulatorConfig _simulatorConfig;
+        private readonly TcpClient _client;
         private const int DefaultTimeout = 10000;
+        private const int ReadBufferSize = 4*1024;
         private bool _running;
 
+        /* Enum used for validation method */
         private enum VariableName {
             Aileron=0,
             Rudder,
@@ -70,37 +71,46 @@ namespace FlightMobileServer.ClientModels {
             if (stream == null) throw new Exception(NetworkStreamError);
             stream.WriteTimeout = DefaultTimeout;
 
+            /* Prepare request string */
             var writeBuffer =
-                                // Set requests
+                                /* Set Requests */
                                 string.Format(SetCommandTemplate, AileronPath, cmd.Aileron) 
                               + string.Format(SetCommandTemplate, RudderPath, cmd.Rudder)
                               + string.Format(SetCommandTemplate, ElevatorPath, cmd.Elevator)
                               + string.Format(SetCommandTemplate, ThrottlePath, cmd.Throttle)
-                                // Get requests
+                                /* Get Requests */
                               + string.Format(GetCommandTemplate, AileronPath) 
                               + string.Format(GetCommandTemplate, RudderPath)
                               + string.Format(GetCommandTemplate, ElevatorPath)
                               + string.Format(GetCommandTemplate, ThrottlePath);
+
+            /* Send request */
             var writeBufferBytes = Encoding.ASCII.GetBytes(writeBuffer);
             stream.Write(writeBufferBytes, 0, writeBufferBytes.Length);
         }
         public string Read() {
-            const int readBufferSize = 4 * 1024;
+            /* Set stream and buffer */
             var stream = _client.GetStream();
-            if (stream == null) throw new Exception(NetworkStreamError); ;
+            if (stream == null) throw new Exception(NetworkStreamError);
             stream.ReadTimeout = DefaultTimeout;
+            var readBufferBytes = new byte[ReadBufferSize];
 
-            var readBufferBytes = new byte[readBufferSize];
-            var bytesRead = stream.Read(readBufferBytes, 0, readBufferSize);
+            /* Read data */
+            var bytesRead = stream.Read(readBufferBytes, 0, ReadBufferSize);
             return Encoding.ASCII.GetString(readBufferBytes, 0, bytesRead);
         }
 
         /* IAsyncTcpClient Methods */
         public void ProcessCommands() {
+            /* Parse port from config throw exception if fail */
+            if (!int.TryParse(_simulatorConfig.TelnetPort, out var port))
+                throw new Exception("Error parsing port");
 
-            Connect(_simulatorConfig.Ip,int.Parse(_simulatorConfig.TelnetPort)); // debug not handling parse exceptions
+            Connect(_simulatorConfig.Ip, port);
+
+            /* Loop works as long as there are commands to process - o.w. blocks until receives */
             foreach (var cmd in _queue.GetConsumingEnumerable()) {
-                var readBuffer = string.Empty;
+                string readBuffer;
                 try {
                     Write(cmd.Command);
                     readBuffer = Read();
@@ -124,12 +134,16 @@ namespace FlightMobileServer.ClientModels {
             return asyncCommand.Task;
         }
         private static Result ValidateResults(Command cmd, string readBuffer) {
+            /* Find all decimal (double) matches in returned response string */
             const string decimalRx = @"-?\d+(\.\d+)?";
             var matches = Regex.Matches(readBuffer, decimalRx);
-            var curVar = VariableName.Aileron;
-            
+
+            /* Iterates each match and compares to the actual value that was sent
+             and check if anything went wrong */
+            var curVar = VariableName.Aileron; 
             foreach (var match in matches) {
                 var receivedVal = double.Parse(match.ToString());
+
 
                 var sentVal = curVar switch {
                     VariableName.Aileron => cmd.Aileron,
@@ -141,16 +155,20 @@ namespace FlightMobileServer.ClientModels {
 
                 if (!sentVal.Equals(receivedVal)) return Result.NotOk;
                 ++curVar;
-            }
+            } // End of foreach loop
+
             return Result.Ok;
         }
 
         private void Connect(string ip, int port) {
-            var attempt = 0;
+            var attempt = 0; // Debug remove
             IAsyncResult result = null;
 
+            /* Keeps trying to connect to a tcp client until succeeds */
+            /**NOTE: once it is connected if connection was lost or simulator 
+               was restarted you have to restart this mediator as well! */
             while (_running && !_client.Connected) {
-                Debug.WriteLine($"TCP Client: Connect attempt #{attempt++}...");
+                Debug.WriteLine($"TCP Client: Connect attempt #{attempt++}..."); // Debug remove
                 result = _client.BeginConnect(ip, port, null, null);
                 result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(5));
             }
@@ -158,19 +176,24 @@ namespace FlightMobileServer.ClientModels {
             if (result == null)
                 throw new Exception("Error connecting to telnet server");
 
+            /* Connected successfully*/
             _client.EndConnect(result);
-            Debug.WriteLine("TCP Client: Connected successfully to server...");
+            Debug.WriteLine("TCP Client: Connected successfully to server..."); // Debug remove
 
+            /*Set stream and sent first message to set raw data communication with simulator*/
             var stream = _client.GetStream();
             if (stream == null) throw new Exception(NetworkStreamError);
-
             var initBuf = Encoding.ASCII.GetBytes("data\n");
             stream.Write(initBuf);
         }
         private void Disconnect()
         {
             _client.Close();
-            // _setRequests.Clear(); todo clear\wait all _queue
+            /** Clear the queue (more info, look at mythz's answer):
+             https://stackoverflow.com/questions/8001133/how-to-empty-a-blockingcollection
+            */
+            while (_queue.TryTake(out _)) { }
+
             Debug.WriteLine("TCP Client: Disconnected successfully to server...");
         }
     }

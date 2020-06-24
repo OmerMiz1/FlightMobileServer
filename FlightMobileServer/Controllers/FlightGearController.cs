@@ -35,11 +35,9 @@ namespace FlightMobileServer.Controllers
             }
 
             if (result == Result.Ok) {
-                Debug.WriteLine("Ok");
                 return Ok();
             }
 
-            Debug.WriteLine($"BadRequest: Aileron={cmd.Aileron}, Rudder={cmd.Rudder}, Elevator={cmd.Elevator}, Throtthle={cmd.Throttle}");
             return BadRequest();
         }
 
@@ -49,16 +47,13 @@ namespace FlightMobileServer.Controllers
             var httpClient = new HttpClient {
                 Timeout = TimeSpan.FromSeconds(30)
             };
-            var responseMessage = await httpClient.GetAsync(_screenshotUrl);
-            var resultImage = await responseMessage.Content.ReadAsByteArrayAsync();
-            return File(resultImage, "image/jpg");
-        }
+            var response = await httpClient.GetByteArrayAsync(_screenshotUrl);
+             
+            /* Failed to get image from simulator */
+            if (response == null)
+                return BadRequest();
 
-        //debug remove
-        [Route("test")]
-        [HttpGet]
-        public async Task<IActionResult> Test() { 
-            return Ok("Hello");
+            return File(response, "image/jpeg");
         }
     }
 }
